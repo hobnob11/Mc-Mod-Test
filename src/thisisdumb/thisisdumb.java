@@ -1,6 +1,8 @@
 package thisisdumb;
 
 import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedList;
 
 public class thisisdumb {
@@ -10,7 +12,7 @@ public class thisisdumb {
 			0.2, // KIN
 			0.35 // THERM
 	};
-	static double BaseArmour = 486240000; // aka MaxArmour
+	static double BaseArmour = 1000; // aka MaxArmour
 
 	public static void main(String[] args) {
 		double startTime = System.currentTimeMillis();
@@ -18,23 +20,40 @@ public class thisisdumb {
 		LinkedList<CoreMod> Nodes = GenerateNewNodes();
 		System.out.println("THAT TOOK: " + (System.currentTimeMillis() - startTime) + "MS");
 		System.out.println("BRACE FOR CALCEHP");
-		
-		//CoreMod[] goldenMods;
-		
-		double bestEHP = 0;
-		CoreMod goldenMod = new CoreMod(0,0,0,0);
 
-		for (CoreMod mod : Nodes) {
-			double curEHP = CalcEHP(1, new CoreMod[] { mod });
-			if (curEHP > bestEHP) {
-				goldenMod = mod;
-				bestEHP = curEHP;
-				System.out.printf("\nEHP: %.2f | EM: %d | EXP: %d | KIN: %d | THERM: %d", curEHP, goldenMod.EM, goldenMod.EXP, goldenMod.KIN, goldenMod.THERM);
+		CoreMod[] goldenMods = new CoreMod[10];
+		goldenMods[0] = new CoreMod(0, 0, 0, 0);
+
+		for (int depth = 1; depth <= 10; depth++) {
+			System.out.println("=============DEPTH: " + depth + "====================");
+			double bestEHP = 0;
+			for (CoreMod mod : Nodes) {
+				if (depth == 1) {
+					double curEHP = CalcEHP(1, new CoreMod[] { mod });
+					if (curEHP > bestEHP) {
+						goldenMods[0] = mod;
+						bestEHP = curEHP;
+						//System.out.printf("\nEHP: %.2f | EM: %d | EXP: %d | KIN: %d | THERM: %d", curEHP, goldenMods[0].EM,
+						//		goldenMods[0].EXP, goldenMods[0].KIN, goldenMods[0].THERM);
+					}
+				} else {
+					double curEHP = CalcEHP(depth, goldenMods, mod);
+					if (curEHP > bestEHP) {
+						goldenMods[depth-1] = mod;
+						bestEHP = curEHP;
+						//System.out.printf("\nEHP: %.2f | EM: %d | EXP: %d | KIN: %d | THERM: %d", curEHP, goldenMods[depth-1].EM,
+						//		goldenMods[depth-1].EXP, goldenMods[depth-1].KIN, goldenMods[depth-1].THERM);
+					}
+				}
 			}
 		}
-		
-		double[] resists = CalcResists(1, new CoreMod[]{goldenMod});
-		System.out.printf("\nResists: %.2f, %.2f, %.2f, %.2f",resists[0],resists[1],resists[2],resists[3]);
+		double[] resists = CalcResists(10, goldenMods);
+		for(CoreMod mod:goldenMods)
+		{
+			System.out.println(mod);
+		}
+		System.out.printf("\nEHP:%.2f",CalcEHP(10,goldenMods));
+		System.out.printf("\nResists: %.2f, %.2f, %.2f, %.2f", resists[0], resists[1], resists[2], resists[3]);
 		// CoreMod testMod = new CoreMod(60,60,60,60);
 		// CoreMod testMod2 = new CoreMod(60,60,30,30);
 
@@ -64,10 +83,10 @@ public class thisisdumb {
 	public static double CalcEHP(int modCount, CoreMod[] mods) {
 		double EHP = BaseArmour;
 
-		int[] rEM = new int[modCount];
-		int[] rEXP = new int[modCount];
-		int[] rKIN = new int[modCount];
-		int[] rTHERM = new int[modCount];
+		Integer[] rEM = new Integer[modCount];
+		Integer[] rEXP = new Integer[modCount];
+		Integer[] rKIN = new Integer[modCount];
+		Integer[] rTHERM = new Integer[modCount];
 
 		for (int i = 0; i < modCount; i++) {
 			rEM[i] = mods[i].EM;
@@ -83,12 +102,40 @@ public class thisisdumb {
 		return EHP / (1 - (EM + EXP + KIN + THERM) / 4);
 	}
 
+	public static double CalcEHP(int modCount, CoreMod[] mods, CoreMod lastMod) {
+		double EHP = BaseArmour;
+
+		Integer[] rEM = new Integer[modCount];
+		Integer[] rEXP = new Integer[modCount];
+		Integer[] rKIN = new Integer[modCount];
+		Integer[] rTHERM = new Integer[modCount];
+
+		for (int i = 0; i < modCount-1; i++) {
+			rEM[i] = mods[i].EM;
+			rEXP[i] = mods[i].EXP;
+			rKIN[i] = mods[i].KIN;
+			rTHERM[i] = mods[i].THERM;
+		}
+
+		rEM[modCount - 1] = lastMod.EM;
+		rEXP[modCount - 1] = lastMod.EXP;
+		rKIN[modCount - 1] = lastMod.KIN;
+		rTHERM[modCount - 1] = lastMod.THERM;
+
+		double EM = CalcResist(BaseResists[0], rEM);
+		double EXP = CalcResist(BaseResists[1], rEXP);
+		double KIN = CalcResist(BaseResists[1], rKIN);
+		double THERM = CalcResist(BaseResists[1], rTHERM);
+
+		return EHP / (1 - (EM + EXP + KIN + THERM) / 4);
+	}
+
 	public static double[] CalcResists(int modCount, CoreMod[] mods) {
 
-		int[] rEM = new int[modCount];
-		int[] rEXP = new int[modCount];
-		int[] rKIN = new int[modCount];
-		int[] rTHERM = new int[modCount];
+		Integer[] rEM = new Integer[modCount];
+		Integer[] rEXP = new Integer[modCount];
+		Integer[] rKIN = new Integer[modCount];
+		Integer[] rTHERM = new Integer[modCount];
 
 		for (int i = 0; i < modCount; i++) {
 			rEM[i] = mods[i].EM;
@@ -104,8 +151,10 @@ public class thisisdumb {
 		return new double[] { EM, EXP, KIN, THERM };
 	}
 
-	public static double CalcResist(double startResistance, int[] resists) {
+	public static double CalcResist(double startResistance, Integer[] resists) {
 		double resistance = startResistance * 100.0;
+
+		Arrays.sort(resists, Collections.reverseOrder());
 
 		for (int i = 0; i < resists.length; i++) {
 			double resist = resists[i];
@@ -115,7 +164,7 @@ public class thisisdumb {
 		return Math.max(-90.0, Math.min(90.0, resistance)) / 100.0;
 	}
 
-	public static double CalcEHP(int[][] coreMods) {
+	public static double CalcEHP(Integer[][] coreMods) {
 		double EHP = BaseArmour;
 		double[] resists = new double[4];
 

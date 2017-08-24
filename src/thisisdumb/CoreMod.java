@@ -17,6 +17,11 @@ public class CoreMod {
 	
 	public boolean isValid()
 	{
-		return this.EM + this.EXP + this.KIN + this.THERM < 50;
+		return this.EM + this.EXP + this.KIN + this.THERM < 150;
+	}
+	
+	@Override
+	public String toString() {
+		return "hobmod[EM:" + EM +"][EXP:" + EXP +"][KIN:" + KIN + "][THERM:" + THERM + "]";
 	}
 }
