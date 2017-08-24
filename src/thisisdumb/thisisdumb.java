@@ -1,8 +1,10 @@
 package thisisdumb;
 
 import java.math.BigInteger;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.LinkedList;
 
 public class thisisdumb {
@@ -15,10 +17,13 @@ public class thisisdumb {
 	static double BaseArmour = 1000; // aka MaxArmour
 
 	public static void main(String[] args) {
-		double startTime = System.currentTimeMillis();
+		long startTime = System.currentTimeMillis();
 		System.out.println("GENERATING MODS");
 		LinkedList<CoreMod> Nodes = GenerateNewNodes();
-		System.out.println("THAT TOOK: " + (System.currentTimeMillis() - startTime) + "MS");
+		
+		long nodetime = System.currentTimeMillis() - startTime;
+		System.out.println("THAT TOOK: " + (new SimpleDateFormat("mm:ss:SSS")).format(new Date(nodetime)));
+		
 		System.out.println("BRACE FOR CALCEHP");
 
 		CoreMod[] goldenMods = new CoreMod[10];
@@ -59,8 +64,9 @@ public class thisisdumb {
 
 		// System.out.printf("\n%.2f\n" , CalcEHP(2,new
 		// CoreMod[]{testMod,testMod2}));
-
-		System.out.println("Total Time Taken: " + (System.currentTimeMillis() - startTime));
+		
+		long totaltime = System.currentTimeMillis() - startTime;
+		System.out.println("Total Time Taken: " + (new SimpleDateFormat("mm:ss:SSS")).format(new Date(totaltime)));
 	}
 
 	public static LinkedList<CoreMod> GenerateNewNodes() {
@@ -69,9 +75,12 @@ public class thisisdumb {
 			for (int EXP = -20; EXP <= 60; EXP++) {
 				for (int KIN = -20; KIN <= 60; KIN++) {
 					for (int THERM = -20; THERM <= 60; THERM++) {
-						CoreMod mod = new CoreMod(EM, EXP, KIN, THERM);
-						if (mod.isValid()) {
-							Nodes.add(mod);
+						for (int ARMOURP = -20; ARMOURP <= 60; ARMOURP++)
+						{
+							CoreMod mod = new CoreMod(EM, EXP, KIN, THERM, ARMOURP);
+							if (mod.isValid()) {
+								Nodes.add(mod);
+							}
 						}
 					}
 				}
@@ -87,18 +96,26 @@ public class thisisdumb {
 		Integer[] rEXP = new Integer[modCount];
 		Integer[] rKIN = new Integer[modCount];
 		Integer[] rTHERM = new Integer[modCount];
-
+		Integer[] rARMOURP = new Integer[modCount];
+		
 		for (int i = 0; i < modCount; i++) {
 			rEM[i] = mods[i].EM;
 			rEXP[i] = mods[i].EXP;
 			rKIN[i] = mods[i].KIN;
 			rTHERM[i] = mods[i].THERM;
+			rARMOURP[i] = mods[i].ARMOURP;
 		}
 		double EM = CalcResist(BaseResists[0], rEM);
 		double EXP = CalcResist(BaseResists[1], rEXP);
 		double KIN = CalcResist(BaseResists[1], rKIN);
 		double THERM = CalcResist(BaseResists[1], rTHERM);
-
+		double ArmourP = 0.0;
+		for(int i = 1; i <= modCount; i++)
+		{
+			ArmourP = ArmourP + ((rARMOURP[i-1]/100 * 1) * (1/Math.pow(i,1.45)));
+		}
+		EHP = EHP + (EHP * ArmourP);
+		
 		return EHP / (1 - (EM + EXP + KIN + THERM) / 4);
 	}
 
@@ -109,24 +126,33 @@ public class thisisdumb {
 		Integer[] rEXP = new Integer[modCount];
 		Integer[] rKIN = new Integer[modCount];
 		Integer[] rTHERM = new Integer[modCount];
-
+		Integer[] rARMOURP = new Integer[modCount];
+		
 		for (int i = 0; i < modCount-1; i++) {
 			rEM[i] = mods[i].EM;
 			rEXP[i] = mods[i].EXP;
 			rKIN[i] = mods[i].KIN;
 			rTHERM[i] = mods[i].THERM;
+			rARMOURP[i] = mods[i].ARMOURP;
 		}
 
 		rEM[modCount - 1] = lastMod.EM;
 		rEXP[modCount - 1] = lastMod.EXP;
 		rKIN[modCount - 1] = lastMod.KIN;
 		rTHERM[modCount - 1] = lastMod.THERM;
+		rARMOURP[modCount - 1] = lastMod.ARMOURP;
 
 		double EM = CalcResist(BaseResists[0], rEM);
 		double EXP = CalcResist(BaseResists[1], rEXP);
 		double KIN = CalcResist(BaseResists[1], rKIN);
 		double THERM = CalcResist(BaseResists[1], rTHERM);
-
+		double ArmourP = 0.0;
+		for(int i = 1; i <= modCount; i++)
+		{
+			ArmourP = ArmourP + ((rARMOURP[i-1]/100 * 1) * (1/Math.pow(i,1.45)));
+		}
+		EHP = EHP + (EHP * ArmourP);
+		
 		return EHP / (1 - (EM + EXP + KIN + THERM) / 4);
 	}
 
