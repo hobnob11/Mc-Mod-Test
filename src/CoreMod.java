@@ -1,4 +1,4 @@
-package thisisdumb;
+
 
 public class CoreMod {
 
